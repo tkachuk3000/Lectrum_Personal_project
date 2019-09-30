@@ -6,7 +6,10 @@ import { render } from 'react-dom';
 import './theme/init';
 
 // App
-// import App from './pages/App';
-import Scheduler from './components/Scheduler';
+import App from './pages/App';
 
-render(<Scheduler />, document.getElementById('app'));
+// import Scheduler from './components/Scheduler';
+
+// render(<Scheduler />, document.getElementById('app'));
+
+render(<App />, document.getElementById('app'));

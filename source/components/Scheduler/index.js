@@ -9,6 +9,7 @@ import Task from '../Task';
 import Checkbox from '../../theme/assets/Checkbox.js'
 import { async } from 'q';
 import {sortTasksByDate, sortTasksByGroup} from '../../instruments';
+import Header from '../Header';
 
 export default class Scheduler extends Component {
     
@@ -20,6 +21,10 @@ export default class Scheduler extends Component {
         newTaskMessage:'',
         searchTask:'',
     };
+
+    componentDidMount() {
+        api.fetchTasks()
+    }
 
     _editTaskFromTask = (id,newMessage) => {
         const { tasks } = this.state;
@@ -53,8 +58,8 @@ export default class Scheduler extends Component {
     };
 
     _submitTask = () => {
-        const {newTaskMessage} = this.state;
-// console.log('',);
+        const { newTaskMessage, tasks } = this.state;
+        
         if(!newTaskMessage){
             return null
         };
@@ -66,8 +71,10 @@ export default class Scheduler extends Component {
                       created: Date.now(),
                     };
 
+        const updateTask = sortTasksByGroup([task, ...tasks]);
+
         this.setState((prevState) => ({
-            tasks:[task, ...prevState.tasks],
+            tasks: updateTask,
             newTaskMessage: '',
         }));
     }
@@ -93,6 +100,7 @@ export default class Scheduler extends Component {
             searchTask: event.target.value,
         })
     }
+
     _changeFavorite = (id) => {
         const { tasks } = this.state;
         const newTasks = tasks.map((task) => {
@@ -110,7 +118,6 @@ export default class Scheduler extends Component {
     }
 
     _changeCheckbox = (id) => {
-        // console.log('=======> from scheduler===>')
         const { tasks } = this.state;
         const newTasks = tasks.map((task) => {
             if(id == task.id){
@@ -125,6 +132,18 @@ export default class Scheduler extends Component {
         });
     }
     
+    _allTaskCompleted = () => {
+        console.log("====> allTaskCompleted");
+        const { tasks } = this.state;
+        const newTasks = tasks.map((task) => {
+            task.completed = true;
+            return task;
+        });
+
+        this.setState({tasks: newTasks})
+
+    }
+
     _showSearchResult = ( task, searchTask ) => {
 
         const str = task.message.substr(0,searchTask.length);
@@ -145,8 +164,13 @@ export default class Scheduler extends Component {
 
     render () {
         const { tasks, newTaskMessage, searchTask}  = this.state;
-
+        
+        const allCompleted = tasks.every((task) => { 
+                return task.completed == true ?  true : false;
+            })
+        
         const showTasks = tasks.map((task) => {
+            
             if(!searchTask){
                 return (
                     <Task
@@ -161,22 +185,22 @@ export default class Scheduler extends Component {
             }else{
                 return this._showSearchResult(task, searchTask);
             }
-        })
+               
+        });
+        
         
         return (
             <section className = { Styles.scheduler }>
-                {/* Планировщик: стартовая точка */}
                 <main>
+                    {/* <Header/> */}
                     <header>
                         <h1>Планировщик Задач</h1>
                         <input 
                         type = 'search' 
                         placeholder = 'Найти'
                         onChange = {this._searchTask}
-                        // value =''
                         />
                     </header> 
-                    {/* <input type = 'text' placeholder = 'Новая задача'></input> */}
                     <section>
                         <form onSubmit = {this._handleFormSubmit}>
                             <input
@@ -192,9 +216,13 @@ export default class Scheduler extends Component {
                         </form>
                     </section>
                     <ul>{showTasks}</ul>
+                    {/* {showTasks} */}
                     <footer>
-                        <Checkbox/>
-                        <span >Все задачи выполнены</span>
+                        <Checkbox
+                        onClick = {this._allTaskCompleted}
+                        checked = {allCompleted}
+                        />
+                        <span className = {Styles.completeAllTasks}>Все задачи выполнены</span>
                     </footer>
                 </main>
                 

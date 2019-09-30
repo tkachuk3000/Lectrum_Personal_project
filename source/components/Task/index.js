@@ -17,6 +17,8 @@ export default class Task extends PureComponent {
     
     static propTypes = {
         id: propTypes.number.isRequired,
+        message: propTypes.string.isRequired,
+        favorite: propTypes.bool.isRequired,
         completed: propTypes.bool.isRequired,
         removeTask: propTypes.func.isRequired,
         editTaskFromTask: propTypes.func.isRequired,
@@ -27,10 +29,7 @@ export default class Task extends PureComponent {
     state = {
         edit: true,
         message: '',
-        // checkboxChecked: true,
-        // starChecked: true,
-        // editChecked: false,
-
+        editChecked: false
     }
     _getTaskShape = ({
         id = this.props.id,
@@ -49,9 +48,8 @@ export default class Task extends PureComponent {
         return removeTask(id)
     };
 
-     _On_Off_EditTask = () => {
-        this.taskInput.current.focus();
-
+    _On_Off_EditTask = () => {
+        // this.taskInput.current.focus();
         const {id, editTaskFromTask, message} = this.props;
         const {message: messageState} = this.state;
         
@@ -60,10 +58,12 @@ export default class Task extends PureComponent {
         this.setState((prevState) => ({
             edit: !prevState.edit,
             editChecked: !prevState.editChecked,
-        }))
+        }),() => this.taskInput.current.focus())
         
         const newMessage = messageState ||  message;
         editTaskFromTask(id, newMessage);
+
+        // this.taskInput.current.focus();
     }
 
     _changeMessageState = (event) =>{
@@ -86,7 +86,6 @@ export default class Task extends PureComponent {
     }
 
     _escapeKey = (event) => {
-        // console.log('Escape');
         if(event.key === 'Escape'){
             
             this.setState((prevState) => ({
@@ -99,31 +98,29 @@ export default class Task extends PureComponent {
 
     _onClickFavorite = () => {
         const { changeFavorite, id } = this.props;
-        // console.log('===> =... ===>');
         changeFavorite(id);
     }
 
     _OnClickChecked = () => {
         const { changeCheckbox, id} = this.props;
-        console.log('****=> =... ****=>')
         changeCheckbox(id);
     }
 
     render () {
-        // const { message, removeTask } = this.props;
         const task = this._getTaskShape(this.props);
-        // const { starChecked,  }
+        // const { tasks }  = this.props;
 
         return (
         <li className = { Styles.task }>
             <Checkbox
-            checked = {this.props.completed}
+            checked = {task.completed}
             onClick = {this._OnClickChecked}
             />
             <div className = {Styles.content}>
             <input 
                 type = 'text' 
                 maxLength = "50"
+                // ref = {reff}
                 ref = {this.taskInput}
                 onChange = {this._changeMessageState}
                 value = { this.state.message || task.message }
@@ -133,8 +130,7 @@ export default class Task extends PureComponent {
             />
             </div>
             <Star
-            // disabled = {true}
-            checked = {this.props.favorite}
+            checked = {task.favorite}
             onClick = {this._onClickFavorite}
             />
             <Edit
