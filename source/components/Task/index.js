@@ -16,7 +16,7 @@ export default class Task extends PureComponent {
     }
     
     static propTypes = {
-        id: propTypes.number.isRequired,
+        id: propTypes.string.isRequired,
         message: propTypes.string.isRequired,
         favorite: propTypes.bool.isRequired,
         completed: propTypes.bool.isRequired,
@@ -120,7 +120,6 @@ export default class Task extends PureComponent {
             <input 
                 type = 'text' 
                 maxLength = "50"
-                // ref = {reff}
                 ref = {this.taskInput}
                 onChange = {this._changeMessageState}
                 value = { this.state.message || task.message }

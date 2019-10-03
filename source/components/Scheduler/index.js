@@ -1,6 +1,7 @@
 // Core
 import React, { Component } from 'react';
-import moment from 'moment';
+// import moment from 'moment';
+import { v4 } from 'uuid';
 
 // Instruments
 import Styles from './styles.m.css';
@@ -14,33 +15,44 @@ import Header from '../Header';
 export default class Scheduler extends Component {
     
     state = {
-        tasks: [
-            {id:12, message: 'Сходить за хлебом', favorite: false, completed: false, created: Date.now()},
-            {id:13, message: 'Покормить кота!', favorite: false, completed: false, created: Date.now()},
-        ],
+        // tasks: [
+        //     {id: v4(), message: 'Сходить за хлебом', favorite: false, completed: false, created: Date.now()},
+        //     {id: v4(), message: 'Покормить кота!', favorite: false, completed: false, created: Date.now()},
+        // ],
+        tasks: [],
         newTaskMessage:'',
         searchTask:'',
     };
 
     componentDidMount() {
-        api.fetchTasks()
+
+        api.fetchTasks().then((tasksFromApi) => {
+                
+                const sortTasksFromApi = sortTasksByGroup(tasksFromApi);
+                this.setState({tasks: sortTasksFromApi})
+            })
+       
     }
 
     _editTaskFromTask = (id,newMessage) => {
+        
         const { tasks } = this.state;
         const newTasks = tasks.map((task) => {
             if( task.id == id ){
                 task.message = newMessage;
+                api.updateTask(task);
             }
+            
             return task
         })
-        
+        // api.updateTask(newTasks);
         this.setState({
             tasks: newTasks
         })
     }
 
     _updateTextTask = (event) =>{
+        
         const { newTaskMessage } = this.state;
         
         if( newTaskMessage.length <= 50 ){
@@ -51,6 +63,7 @@ export default class Scheduler extends Component {
     };
 
     _submitOnEnter = (event) => {
+        
         if(event.key === 'Enter'){
             event.preventDefault();
             this._submitTask();
@@ -64,32 +77,40 @@ export default class Scheduler extends Component {
             return null
         };
 
-        const task = {id: Date.now(),
+        const task = {id: v4(),
                       message: newTaskMessage,
                       favorite: false,
                       completed: false,
                       created: Date.now(),
-                    };
+        };
+        
+        api.createTask(task).then((newTaskFromServer) => {
+            
+            const updateTask = sortTasksByGroup([newTaskFromServer, ...tasks]);
 
-        const updateTask = sortTasksByGroup([task, ...tasks]);
-
-        this.setState((prevState) => ({
-            tasks: updateTask,
-            newTaskMessage: '',
-        }));
+            this.setState({
+                tasks: updateTask,
+                newTaskMessage: '',
+            });
+        });
+        
     }
 
     _handleFormSubmit = (event) =>{
+        
         event.preventDefault();
         this._submitTask();
     }
 
     _removeTaskFromState = (id) =>{
+        
         const { tasks }  = this.state;
         const updateTask = tasks.filter((task)=>{
             if( id !== task.id ) {
                 return task
-            };
+            }else{
+                api.removeTask(id)
+            }
         })
         this.setState({tasks:updateTask})
     }
@@ -102,10 +123,12 @@ export default class Scheduler extends Component {
     }
 
     _changeFavorite = (id) => {
+        
         const { tasks } = this.state;
         const newTasks = tasks.map((task) => {
             if(id == task.id){
-                task.favorite = !task.favorite
+                task.favorite = !task.favorite;
+                api.updateTask(task);
             }
             return task
         });
@@ -118,10 +141,12 @@ export default class Scheduler extends Component {
     }
 
     _changeCheckbox = (id) => {
+       
         const { tasks } = this.state;
         const newTasks = tasks.map((task) => {
             if(id == task.id){
-                task.completed = !task.completed
+                task.completed = !task.completed;
+                api.updateTask(task);
             }
             return task
         });
@@ -133,13 +158,15 @@ export default class Scheduler extends Component {
     }
     
     _allTaskCompleted = () => {
-        console.log("====> allTaskCompleted");
+
         const { tasks } = this.state;
         const newTasks = tasks.map((task) => {
             task.completed = true;
             return task;
         });
-
+        
+        api.completeAllTasks(tasks);
+        
         this.setState({tasks: newTasks})
 
     }
@@ -164,8 +191,9 @@ export default class Scheduler extends Component {
 
     render () {
         const { tasks, newTaskMessage, searchTask}  = this.state;
-        
+
         const allCompleted = tasks.every((task) => { 
+            
                 return task.completed == true ?  true : false;
             })
         
@@ -216,7 +244,6 @@ export default class Scheduler extends Component {
                         </form>
                     </section>
                     <ul>{showTasks}</ul>
-                    {/* {showTasks} */}
                     <footer>
                         <Checkbox
                         onClick = {this._allTaskCompleted}
